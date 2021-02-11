@@ -4,6 +4,8 @@ for i = 1, 8 do
   math.random()
 end
 
+require "fuior.config"
+
 local env = require "crit.env"
 local save_file = require "lib.save_file"
 local Layout = require "crit.layout"
