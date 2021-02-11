@@ -56,3 +56,53 @@ api.register_hook("resolve:per_platform_dependencies", function (added_deps, rem
   removed_deps[#removed_deps+1] = "critique%-gaming/fuior"
   return added_deps, removed_deps
 end)
+
+api.register_hook("intl_export:run", function (format, output_dir)
+  local fuior = require "deploy.config.hooks.fuior.fuior"
+  local intl = require("deploy.src.intl")
+  local path = require("path")
+
+  local namespaces = {}
+
+  path.each(path.join("fuior", "src", "*"), "f", function (filename)
+    local _, ext = path.splitext(filename)
+    if ext ~= ".fui" then return end
+
+    local _, intl_data, namespace = fuior.compile(filename)
+    namespaces[namespace] = intl.merge(namespaces[namespace], intl_data)
+  end, { recurse = true })
+
+  for namespace, intl_data in pairs(namespaces) do
+    local filename = path.join(output_dir, namespace .. ".en." .. format)
+    util.write_file(filename, intl.stringify(format, intl_data))
+  end
+end)
+
+api.register_command({
+  id = "intl_fuior",
+
+  parser_config = function (parser)
+    local cmd = parser:command("intl_fuior", "Export intl strings from a fuior file")
+    cmd:argument("fuior_file", "Path to the fuior file to export from")
+    cmd:argument("out_file", "Path to exported file")
+    cmd:option("--format", "Output format. One of: lua, csv", "lua")
+  end,
+
+  run = function (args)
+    local path = require("path")
+    local intl = require("deploy.src.intl")
+
+    -- Try to make path relative to project dir, so that path hashes are kept stable
+    local fuior_file = path.normalize(args.fuior_file)
+    if path.isabs(fuior_file) then
+      local pwd = path.ensure_dir_end(path.currentdir())
+      if fuior_file:sub(1, #pwd) == pwd then
+        fuior_file = fuior_file:sub(#pwd + 1)
+      end
+    end
+
+    local fuior = require "deploy.config.hooks.fuior.fuior"
+    local _, intl_data = fuior.compile(fuior_file)
+    util.write_file(args.out_file, intl.stringify(args.format, intl_data))
+  end,
+})
