@@ -78,6 +78,18 @@ api.register_hook("intl_export:run", function (format, output_dir)
   end
 end)
 
+local function relativise_path(path, filename)
+  -- Try to make path relative to project dir, so that path hashes are kept stable
+  filename = path.normalize(filename)
+  if path.isabs(filename) then
+    local pwd = path.ensure_dir_end(path.currentdir())
+    if filename:sub(1, #pwd) == pwd then
+      filename = filename:sub(#pwd + 1)
+    end
+  end
+  return filename
+end
+
 api.register_command({
   id = "intl_fuior",
 
@@ -92,17 +104,51 @@ api.register_command({
     local path = require("path")
     local intl = require("deploy.src.intl")
 
-    -- Try to make path relative to project dir, so that path hashes are kept stable
-    local fuior_file = path.normalize(args.fuior_file)
-    if path.isabs(fuior_file) then
-      local pwd = path.ensure_dir_end(path.currentdir())
-      if fuior_file:sub(1, #pwd) == pwd then
-        fuior_file = fuior_file:sub(#pwd + 1)
-      end
-    end
+    local fuior_file = relativise_path(path, args.fuior_file)
 
     local fuior = require "deploy.config.hooks.fuior.fuior"
     local _, intl_data = fuior.compile(fuior_file)
     util.write_file(args.out_file, intl.stringify(args.format, intl_data))
+  end,
+})
+
+api.register_command({
+  id = "fuior_lint",
+
+  parser_config = function (parser)
+    local cmd = parser:command("fuior_lint", "Check fuior files for errors")
+    cmd:argument("fuior_file",
+      "Path to the fuior file to check. If not provided, will check all fuior files."
+    ):args("?")
+  end,
+
+  run = function (args)
+    local path = require("path")
+    local fuior = require "deploy.config.hooks.fuior.fuior"
+
+    local function check_file(filename)
+      filename = relativise_path(path, filename)
+      return pcall(function ()
+        fuior.compile(filename, filename, false)
+      end)
+    end
+
+    if args.fuior_file then
+      if not check_file(args.fuior_file) then
+        os.exit(1)
+      end
+      return
+    end
+
+    local ok = true
+    path.each(path.join("fuior", "src", "*"), "f", function (filename)
+      local _, ext = path.splitext(filename)
+      if ext ~= ".fui" then return end
+      ok = ok and check_file(filename)
+    end, { recurse = true })
+
+    if not ok then
+      os.exit(1)
+    end
   end,
 })

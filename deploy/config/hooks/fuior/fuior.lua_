@@ -12,22 +12,27 @@ local function exec(str)
   return assert((loadstring or load)(str))()
 end
 
-local function compile(filename, fuior_filename)
+local function compile(filename, fuior_filename, normalize_filename)
   fuior_filename = fuior_filename or filename
 
-  local start
-  local end_ = 0
-  while true do
-    start, end_ = string.find(fuior_filename, path.DIR_SEP, end_ + 1, true)
-    if not start then break end
-    fuior_filename = fuior_filename:sub(1, start - 1) .. "/" .. fuior_filename:sub(end_ + 1)
+  if normalize_filename ~= false then
+    local start
+    local end_ = 0
+    while true do
+      start, end_ = string.find(fuior_filename, path.DIR_SEP, end_ + 1, true)
+      if not start then break end
+      fuior_filename = fuior_filename:sub(1, start - 1) .. "/" .. fuior_filename:sub(end_ + 1)
+    end
+
+    if fuior_filename:sub(1, 1) ~= "/" then
+      fuior_filename = "/" .. fuior_filename
+    end
   end
 
-  if fuior_filename:sub(1, 1) ~= "/" then
-    fuior_filename = "/" .. fuior_filename
+  local compiled, _, _, exitcode = shell.read({ fuior_cli, filename, fuior_filename })
+  if (exitcode ~= nil and exitcode ~= 0) or compiled == "" then
+    error("Fuior compilation error")
   end
-
-  local compiled = shell.read({ fuior_cli, filename, fuior_filename })
 
   local namespace, intl_data
 
