@@ -1,0 +1,13 @@
+#!/usr/bin/env lua
+
+local sep = package.config:sub(1, 1)
+package.path = (
+  'deploy' .. sep .. 'src' .. sep .. 'lib' .. sep .. '?.lua;' ..
+  'deploy' .. sep .. 'src' .. sep .. 'lib' .. sep .. '?' .. sep .. 'init.lua;' ..
+  '.' .. sep .. '?.lua;' ..
+  '.' .. sep .. '?' .. sep .. 'init.lua;' ..
+  package.path
+)
+package.path = package.path:gsub(".lua", ".lua_") .. ';' .. package.path
+
+require("deploy.src")
