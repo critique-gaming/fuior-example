@@ -1,0 +1,58 @@
+local api = require("deploy.src.api")
+local util = require("deploy.src.util")
+
+api.register_hook("build:prepare", function (context)
+  local fuior = require "deploy.config.hooks.fuior.fuior"
+  local intl = require("deploy.src.intl")
+  local path = require("path")
+
+  local namespaces = {}
+  local precompiled_files = {}
+  local original_files = {}
+
+  local function rmf(filename)
+    pcall(function () path.remove(filename) end)
+  end
+
+  path.each(path.join("fuior", "src", "*"), "f", function (filename)
+    local _, ext = path.splitext(filename)
+    if ext ~= ".fui" then return end
+
+    original_files[filename] = util.read_file(filename)
+
+    local compiled, intl_data, namespace = fuior.compile(filename)
+    namespaces[namespace] = intl.merge(namespaces[namespace], intl_data)
+
+    local precompiled_filename = filename .. ".precompiled.lua"
+    util.write_file(precompiled_filename, compiled)
+    precompiled_files[precompiled_filename] = true
+
+    rmf(filename)
+  end, { recurse = true })
+
+  for namespace, intl_data in pairs(namespaces) do
+    local filename = path.join("intl", namespace .. ".en.lua")
+    util.write_file(filename, intl.stringify("lua", intl_data))
+  end
+
+  return function ()
+    for filename, data in pairs(original_files) do
+      util.write_file(filename, data)
+    end
+
+    for filename in pairs(precompiled_files) do
+      rmf(filename)
+    end
+
+    for namespace in pairs(namespaces) do
+      local filename = path.join("intl", namespace .. ".en.lua")
+      rmf(filename)
+    end
+  end
+end)
+
+api.register_hook("resolve:per_platform_dependencies", function (added_deps, removed_deps)
+  removed_deps = removed_deps or {}
+  removed_deps[#removed_deps+1] = "critique%-gaming/fuior"
+  return added_deps, removed_deps
+end)

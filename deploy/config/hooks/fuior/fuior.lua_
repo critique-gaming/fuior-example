@@ -1,0 +1,47 @@
+local api = require("deploy.src.api")
+local shell = require("shell")
+local path = require("path")
+local dotenv = require("deploy.src.dotenv")
+local intl = require("deploy.src.intl")
+local util = require("deploy.src.util")
+
+local exe_ext = dotenv.os_name == "Windows" and ".exe" or ""
+local fuior_cli = dotenv.getenv("FUIOR") or (
+  path.join("deploy", "config", "hooks", "fuior", "bin", dotenv.os_name, "fuior" .. exe_ext)
+)
+
+local function exec(str)
+  return assert((loadstring or load)(str))()
+end
+
+local function compile(filename, fuior_filename)
+  fuior_filename = fuior_filename or filename
+
+  local start
+  local end_ = 0
+  while true do
+    start, end_ = string.find(fuior_filename, path.DIR_SEP, end_ + 1, true)
+    if not start then break end
+    fuior_filename = fuior_filename:sub(1, start - 1) .. "/" .. fuior_filename:sub(end_ + 1)
+  end
+
+  if fuior_filename:sub(1, 1) ~= "/" then
+    fuior_filename = "/" .. fuior_filename
+  end
+
+  local compiled = shell.read({ fuior_cli, filename, fuior_filename })
+
+  local namespace, intl_data
+
+  compiled = compiled:gsub("fui%.intl%((.*), ({\n.-%s+})%)", function (namespace_str, intl_data_str)
+    namespace = exec("return " .. namespace_str)
+    intl_data = intl.parse("lua", "return " .. intl_data_str)
+    return "fui.intl(" .. namespace_str .. ")"
+  end)
+
+  namespace = "fuior_" .. (namespace or "main")
+
+  return compiled, intl_data, namespace
+end
+
+return { compile = compile }
