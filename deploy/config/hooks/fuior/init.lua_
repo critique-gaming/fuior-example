@@ -129,7 +129,7 @@ api.register_command({
     local function check_file(filename)
       filename = relativise_path(path, filename)
       return pcall(function ()
-        fuior.compile(filename, filename, false)
+        fuior.compile(filename)
       end)
     end
 
