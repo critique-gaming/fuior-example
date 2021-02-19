@@ -15,6 +15,8 @@ local progressions = {
 
     game()
   end,
+
+  fuior = require "fuior.hot_reload_progression",
 }
 
 local function run_progression(progression_id, ...)

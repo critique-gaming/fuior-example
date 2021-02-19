@@ -14,7 +14,7 @@ high_dpi = 1
 title = fuior-example
 version = 1.0.0
 custom_resources = _env/,intl/,fuior/src
-dependencies = https://github.com/britzl/deftest/archive/2.7.1.zip,https://github.com/subsoap/defos/archive/v2.4.2.zip,https://github.com/britzl/monarch/archive/3.2.0.zip,https://github.com/dapetcu21/extension-safearea/archive/master.zip,https://github.com/critique-gaming/fuior/archive/master.zip
+dependencies = https://github.com/britzl/deftest/archive/2.7.1.zip,https://github.com/subsoap/defos/archive/v2.4.2.zip,https://github.com/britzl/monarch/archive/3.2.0.zip,https://github.com/dapetcu21/extension-safearea/archive/master.zip,https://github.com/critique-gaming/fuior/archive/master.zip,https://github.com/britzl/defnet/archive/5.1.0.zip,https://github.com/britzl/defold-luasocket/archive/0.11.1.zip
 
 [input]
 use_accelerometer = 0

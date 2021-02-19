@@ -1,0 +1,13 @@
+local server = require "fuior.hot_reload_server"
+
+function init(self)
+  server.init()
+end
+
+function update(self, dt)
+  server.update()
+end
+
+function final(self)
+  server.final()
+end
