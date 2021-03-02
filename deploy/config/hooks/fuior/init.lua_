@@ -49,7 +49,7 @@ api.register_hook("build:prepare", function (context)
     end
 
     for namespace in pairs(namespaces) do
-      local filename = path.join("intl", namespace .. ".en.lua")
+      local filename = path.join(project_dir, "intl", namespace .. ".en.lua")
       rmf(filename)
     end
   end
