@@ -1,6 +1,8 @@
 local api = require("deploy.src.api")
 local util = require("deploy.src.util")
 
+local project_dir = _G.project_dir or "."
+
 api.register_hook("build:prepare", function (context)
   local fuior = require "deploy.config.hooks.fuior.fuior"
   local intl = require("deploy.src.intl")
@@ -14,7 +16,7 @@ api.register_hook("build:prepare", function (context)
     pcall(function () path.remove(filename) end)
   end
 
-  path.each(path.join("fuior", "src", "*"), "f", function (filename)
+  path.each(path.join(project_dir, "fuior", "src", "*"), "f", function (filename)
     local _, ext = path.splitext(filename)
     if ext ~= ".fui" then return end
 
@@ -31,7 +33,7 @@ api.register_hook("build:prepare", function (context)
   end, { recurse = true })
 
   for namespace, intl_data in pairs(namespaces) do
-    local filename = path.join("intl", namespace .. ".en.lua")
+    local filename = path.join(project_dir, "intl", namespace .. ".en.lua")
     util.write_file(filename, intl.stringify("lua", intl_data))
   end
 
@@ -64,7 +66,7 @@ api.register_hook("intl_export:run", function (format, output_dir)
 
   local namespaces = {}
 
-  path.each(path.join("fuior", "src", "*"), "f", function (filename)
+  path.each(path.join(project_dir, "fuior", "src", "*"), "f", function (filename)
     local _, ext = path.splitext(filename)
     if ext ~= ".fui" then return end
 
@@ -141,7 +143,7 @@ api.register_command({
     end
 
     local ok = true
-    path.each(path.join("fuior", "src", "*"), "f", function (filename)
+    path.each(path.join(project_dir, "fuior", "src", "*"), "f", function (filename)
       local _, ext = path.splitext(filename)
       if ext ~= ".fui" then return end
       ok = ok and check_file(filename)

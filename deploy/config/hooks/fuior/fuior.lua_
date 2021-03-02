@@ -3,9 +3,11 @@ local path = require("path")
 local dotenv = require("deploy.src.dotenv")
 local intl = require("deploy.src.intl")
 
+local project_dir = _G.project_dir or "."
+
 local exe_ext = dotenv.os_name == "Windows" and ".exe" or ""
 local fuior_cli = dotenv.getenv("FUIOR") or (
-  path.join("deploy", "config", "hooks", "fuior", "bin", dotenv.os_name, "fuior" .. exe_ext)
+  path.join(project_dir, "deploy", "config", "hooks", "fuior", "bin", dotenv.os_name, "fuior" .. exe_ext)
 )
 
 local function exec(str)
