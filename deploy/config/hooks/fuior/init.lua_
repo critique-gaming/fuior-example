@@ -28,13 +28,15 @@ api.register_hook("build:prepare", function (context)
     local precompiled_filename = filename .. ".precompiled.lua"
     util.write_file(precompiled_filename, compiled)
     precompiled_files[precompiled_filename] = true
-
-    rmf(filename)
   end, { recurse = true })
 
   for namespace, intl_data in pairs(namespaces) do
     local filename = path.join(project_dir, "intl", namespace .. ".en.lua")
     util.write_file(filename, intl.stringify("lua", intl_data))
+  end
+
+  for filename in pairs(original_files) do
+    rmf(filename)
   end
 
   return function ()
